@@ -1,0 +1,13 @@
+repositories:
+  apriltag_ros:
+    type: git
+    url: https://github.com/tanelikor/apriltag_ros.git
+    version: master
+  apriltag_msgs:
+    type: git
+    url: https://github.com/christianrauch/apriltag_msgs.git
+    version: master
+  cv_bridge:
+    type: git
+    url: https://github.com/ros-perception/vision_opencv.git
+    version: ros2
