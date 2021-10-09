@@ -31,6 +31,7 @@ RUN pip3 install icecream numpy opencv-python
 ENV BASE_WS=/workspace/eye_tracked_arm
 ENV PACKAGE_WS=$BASE_WS/package_ws
 ENV ROBOT_WS=$BASE_WS/robot_ws
+ENV TOBII_SDK=$BASE_WS/tobii_sdk
 
 RUN mkdir -p $PACKAGE_WS/src && \
     mkdir -p $ROBOT_WS/src
@@ -70,6 +71,10 @@ RUN cd /opencv/opencv && \
     make install
 
 RUN apt install -y libcanberra-gtk-module libcanberra-gtk3-module
+
+COPY tobii_sdk/ $TOBII_SDK/
+RUN cd $TOBII_SDK && \
+    make install
 
 COPY package_ws/src $PACKAGE_WS/src
 RUN cd $PACKAGE_WS/src && \

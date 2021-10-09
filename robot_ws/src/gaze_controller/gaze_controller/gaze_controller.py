@@ -4,7 +4,7 @@ from rclpy.qos import QoSProfile, QoSDurabilityPolicy, QoSReliabilityPolicy
 from rclpy.parameter import Parameter
 
 from geometry_msgs.msg import PointStamped, Point
-from sensor_msgs.msg import CameraInfo
+from sensor_msgs.msg import CameraInfo, Image
 from apriltag_msgs.msg import AprilTagDetectionArray, AprilTagDetection
 
 from gaze_controller.bounding_box import BoundingBox
@@ -21,6 +21,12 @@ class GazeController(Node):
             durability=QoSDurabilityPolicy.RMW_QOS_POLICY_DURABILITY_VOLATILE,
             reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT,
         )
+
+        transient_local_qos = QoSProfile(
+            durability=QoSDurabilityPolicy.RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
+            reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT,
+        )
+
         self.gaze_sub = self.create_subscription(PointStamped,
                                                  '/gaze',
                                                  self.gaze_callback,
@@ -33,6 +39,11 @@ class GazeController(Node):
                                                         '/camera_info',
                                                         self.camera_info_callback,
                                                         best_effort_qos)
+
+        self.camera_sub = self.create_subscription(Image,
+                                                   '/camera',
+                                                   self.camera_callback,
+                                                   best_effort_qos)
 
         self.latest_fiducial_msg: AprilTagDetectionArray = None
         self.camera_info = None
@@ -53,6 +64,9 @@ class GazeController(Node):
         # Get gaze point in world
 
         # Move arm
+        pass
+
+    def camera_callback(self, data: Image):
         pass
 
     def fiducial_callback(self, tag_array: AprilTagDetectionArray):

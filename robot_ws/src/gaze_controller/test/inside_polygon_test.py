@@ -18,6 +18,7 @@ class MyTestCase(unittest.TestCase):
     #   |  H -- C  --|-------- I
     #   |        F --|--------- G
     #   E __________ A
+
     def setUp(self) -> None:
         self.A = Point(5.0, 1.0)
         self.B = Point(5.0, 5.0)
@@ -63,8 +64,6 @@ class MyTestCase(unittest.TestCase):
         self.assertFalse(is_inside_polygon(self.polygon, self.L))
         self.assertTrue(is_inside_polygon(self.polygon2, self.F))
         self.assertTrue(is_inside_polygon(self.polygon2, self.E))
-
-
 
 
 if __name__ == '__main__':

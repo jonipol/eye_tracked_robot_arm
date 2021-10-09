@@ -11,17 +11,14 @@ endif()
 
 # Find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(rclpy REQUIRED)
-find_package(rclcpp_lifecycle REQUIRED)
-find_package(lifecycle_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 
 find_package(OpenCV REQUIRED)
+find_package(tobii_research REQUIRED)
 
 #include(FetchContent)
 #FetchContent_Declare(json
@@ -48,6 +45,10 @@ add_library(camera_calibrator SHARED
         src/CameraCalibrator.cpp)
 ament_target_dependencies(camera_calibrator OpenCV)
 
+add_library(eye_tracking SHARED
+        src/EyeTracking.cpp)
+ament_target_depencies(eye_tracking OpenCV tobii_research)
+
 install(
         TARGETS camera_calibrator
         ARCHIVE DESTINATION lib/${PROJECT_NAME}
@@ -58,18 +59,29 @@ install(
 # Create Cpp executable
 #target_link_libraries(xxx nlohmann_json::nlohmann_json)
 
+set(dependencies
+    rclcpp
+    std_msgs
+    sensor_msgs
+    OpenCV
+    cv_bridge
+)
+
+set(gaze_dependencies
+    rclcpp
+    geometry_msgs
+)
+
 add_executable(tobii_camera src/tobii_camera.cpp)
-ament_target_dependencies(tobii_camera rclcpp OpenCV sensor_msgs cv_bridge)
+ament_target_dependencies(tobii_camera ${dependencies})
 
-#add_executable(tobii_gaze src/tobii_gaze.cpp)
-#ament_target_dependencies(tobii_gaze rclcpp geometry_msgs)
-
-
+add_executable(tobii_gaze_node src/tobii_gaze_node.cpp)
+ament_target_dependencies(tobii_gaze_node ${gaze_dependencies})
 
 # Install Cpp executables
 install(TARGETS
-#        tobii_node
         tobii_camera
+        tobii_gaze_node
         DESTINATION lib/${PROJECT_NAME}
         )
 
