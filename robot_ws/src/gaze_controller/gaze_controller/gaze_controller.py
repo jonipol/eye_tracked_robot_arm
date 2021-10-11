@@ -8,10 +8,12 @@ from sensor_msgs.msg import CameraInfo, Image
 from apriltag_msgs.msg import AprilTagDetectionArray, AprilTagDetection
 
 from gaze_controller.bounding_box import BoundingBox
+from point_in_polygon import is_inside_polygon
 
 import math
 import cv2
 import numpy as np
+from typing import List
 
 
 class GazeController(Node):
@@ -54,17 +56,30 @@ class GazeController(Node):
         self.marker_pose_3 = Point(x=-0.5, y=0.5,  z=0.0)
         self.marker_pose_list = [self.marker_pose_0, self.marker_pose_1, self.marker_pose_2, self.marker_pose_3]
 
-    def gaze_callback(self, point: PointStamped):
-        # Check timestamps
+    # TODO: combine to one callback using message filter.
+    #       Check timestamps happens there?
+    def gaze_callback(self, gaze_point: PointStamped):
+        # get the area
+        tag_detections: List[AprilTagDetectionArray] = []      # TODO: Get from message filter
+        working_area_in_image: List[Point] = []
+        for tag in tag_detections:
+            working_area_in_image.append(tag.center)
+
+        # Check which tags are visible -> mofidy marker_pose_list
+        object_points = self.marker_pose_list
 
         # Check if gaze is inside area
+        if is_inside_polygon(working_area_in_image, gaze_point):
+            # solvePnP
+            rotation_vector, translation_vector = cv2.solvePnP(object_points,
+                                                               working_area_in_image,
+                                                               cameraMatrix=0,
+                                                               distCoeffs=0)
+            # Get gaze point in world
+            point = Point(x=1.5, y=1.5)
 
-        # solvePnP
+            # Move arm
 
-        # Get gaze point in world
-
-        # Move arm
-        pass
 
     def camera_callback(self, data: Image):
         pass

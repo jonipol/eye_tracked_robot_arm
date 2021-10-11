@@ -40,7 +40,6 @@ ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   gaze_controller/gaze_controller.py
   gaze_controller/bounding_box.py
-  gaze_controller/line.py
   DESTINATION lib/${PROJECT_NAME}
 )
 ament_package()

@@ -43,7 +43,7 @@ def are_line_segments_intersecting(start_point_1: PointProtocol, end_point_1: Po
     return True
 
 
-def is_inside_polygon(polygon_corners: [Point32], point: Point32) -> bool:
+def is_inside_polygon(polygon_corners: [PointProtocol], point: PointProtocol) -> bool:
     """
     Check if point is inside the given polygon. On the edge -> inside
     :rtype: bool
