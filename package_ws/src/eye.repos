@@ -3,6 +3,10 @@ repositories:
     type: git
     url: https://github.com/tanelikor/apriltag_ros.git
     version: master
+  apriltag:
+    type: git
+    url: https://github.com/AprilRobotics/apriltag.git
+    version: master
   apriltag_msgs:
     type: git
     url: https://github.com/christianrauch/apriltag_msgs.git

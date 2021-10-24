@@ -18,7 +18,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 
 find_package(OpenCV REQUIRED)
-find_package(PkgConfig REQUIRED)
+# find_package(PkgConfig REQUIRED)
 
 #include(FetchContent)
 #FetchContent_Declare(json
@@ -46,12 +46,12 @@ add_library(camera_calibrator SHARED
 ament_target_dependencies(camera_calibrator OpenCV)
 
 # these calls create special `PkgConfig::<MODULE>` variables
-pkg_check_modules(tobii_research REQUIRED IMPORTED_TARGET tobii_research)
+# pkg_check_modules(tobii_research REQUIRED IMPORTED_TARGET tobii_research)
 
-add_library(eye_tracking SHARED
-        src/EyeTracking.cpp)
-ament_target_dependencies(eye_tracking OpenCV)
-target_link_libraries(eye_tracking PkgConfig::tobii_research)
+# add_library(eye_tracking SHARED
+#        src/EyeTracking.cpp)
+# ament_target_dependencies(eye_tracking OpenCV)
+# target_link_libraries(eye_tracking PkgConfig::tobii_research)
 
 install(
         TARGETS camera_calibrator

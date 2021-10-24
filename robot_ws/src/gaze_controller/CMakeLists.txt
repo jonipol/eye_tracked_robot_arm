@@ -14,6 +14,11 @@ find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(apriltag_msgs REQUIRED)
+
+find_package(OpenCV REQUIRED)
 
 install(DIRECTORY
   launch
@@ -23,13 +28,19 @@ install(DIRECTORY
 # Include Cpp "include" directory
 include_directories(include)
 
-# Create Cpp executable
-#add_executable(cpp_executable src/cpp_node.cpp)
-#ament_target_dependencies(cpp_executable rclcpp)
+set(gaze_deps
+  rclcpp
+  geometry_msgs
+  sensor_msgs
+  apriltag_msgs
+  OpenCV
+)
 
-# Install Cpp executables
+add_executable(gaze_to_world_coordinates src/gaze_to_world_coordinates.cpp)
+ament_target_dependencies(gaze_to_world_coordinates ${gaze_deps})
+
 install(TARGETS
-#  cpp_executable
+  gaze_to_world_coordinates
   DESTINATION lib/${PROJECT_NAME}
 )
 

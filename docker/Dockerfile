@@ -9,7 +9,25 @@ RUN apt-get update -y && apt-get install -y \
     wget \
     python3-colcon-common-extensions \
     python3-pip \
-    python3-vcstool
+    python3-vcstool \
+    libcanberra-gtk-module \
+    libcanberra-gtk3-module \
+    build-essential \
+    cmake \
+    git \
+    libgtk2.0-dev \
+    pkg-config \
+    libavcodec-dev \
+    libavformat-dev \
+    libswscale-dev \
+    python-dev \
+    python-numpy \
+    libtbb2 \
+    libtbb-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libtiff-dev \
+    libdc1394-22-dev
 
 RUN sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list' && \
     wget https://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add - && \
@@ -31,13 +49,12 @@ RUN pip3 install icecream numpy opencv-python
 ENV BASE_WS=/workspace/eye_tracked_arm
 ENV PACKAGE_WS=$BASE_WS/package_ws
 ENV ROBOT_WS=$BASE_WS/robot_ws
+ENV UR_WS=$BASE_WS/ur_ws
 ENV TOBII_SDK=$BASE_WS/tobii_sdk
 
 RUN mkdir -p $PACKAGE_WS/src && \
-    mkdir -p $ROBOT_WS/src
-
-ENV UR_WS=$BASE_WS/ur_ws
-RUN mkdir -p $UR_WS/src
+    mkdir -p $ROBOT_WS/src && \
+    mkdir -p $UR_WS/src
 
 RUN cd $UR_WS/src  && \
     git clone -b foxy --single-branch https://github.com/UniversalRobots/Universal_Robots_ROS2_Driver.git Universal_Robots_ROS2_Driver  && \
@@ -52,12 +69,6 @@ RUN cd $UR_WS && \
     rosdep install --ignore-src --from-paths src -y -r && \
     colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
 
-
-RUN apt-get update -y && apt-get install -y \
-    build-essential \
-    cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev \
-    python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev
-
 RUN mkdir /opencv && \
     cd /opencv && \
     git clone https://github.com/opencv/opencv.git && \
@@ -70,11 +81,9 @@ RUN cd /opencv/opencv && \
     make -j7 && \
     make install
 
-RUN apt install -y libcanberra-gtk-module libcanberra-gtk3-module
-
-COPY tobii_sdk/ $TOBII_SDK/
-RUN cd $TOBII_SDK && \
-    make install
+#COPY tobii_sdk/ $TOBII_SDK/
+#RUN cd $TOBII_SDK && \
+#    make install
 
 COPY package_ws/src $PACKAGE_WS/src
 RUN cd $PACKAGE_WS/src && \
@@ -87,6 +96,7 @@ RUN cd $PACKAGE_WS/src && \
 COPY robot_ws/src $ROBOT_WS/src
 RUN cd $ROBOT_WS && \
     . /opt/ros/foxy/setup.sh && \
+    . $PACKAGE_WS/install/setup.sh && \
     rosdep install --from-paths src --ignore-src -r -y && \
     colcon build --symlink-install
 

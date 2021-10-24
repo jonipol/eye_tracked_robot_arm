@@ -8,12 +8,12 @@ from sensor_msgs.msg import CameraInfo, Image
 from apriltag_msgs.msg import AprilTagDetectionArray, AprilTagDetection
 
 from gaze_controller.bounding_box import BoundingBox
-from point_in_polygon import is_inside_polygon
+from point_in_polygon import is_inside_polygon, PointProtocol
 
 import math
 import cv2
 import numpy as np
-from typing import List
+from typing import List, Tuple
 
 
 class GazeController(Node):
@@ -50,36 +50,39 @@ class GazeController(Node):
         self.latest_fiducial_msg: AprilTagDetectionArray = None
         self.camera_info = None
 
-        self.marker_pose_0 = Point(x=0.5,  y=0.5,  z=0.0)
-        self.marker_pose_1 = Point(x=0.5,  y=-0.5, z=0.0)
-        self.marker_pose_2 = Point(x=-0.5, y=-0.5, z=0.0)
-        self.marker_pose_3 = Point(x=-0.5, y=0.5,  z=0.0)
+        self.marker_pose_0 = Point(x=0.5,  y=0.5,  z=0.0)   # tag 0
+        self.marker_pose_1 = Point(x=0.5,  y=-0.5, z=0.0)   # tag 1
+        self.marker_pose_2 = Point(x=-0.5, y=-0.5, z=0.0)   # tag 2
+        self.marker_pose_3 = Point(x=-0.5, y=0.5,  z=0.0)   # tag 3
         self.marker_pose_list = [self.marker_pose_0, self.marker_pose_1, self.marker_pose_2, self.marker_pose_3]
 
     # TODO: combine to one callback using message filter.
     #       Check timestamps happens there?
     def gaze_callback(self, gaze_point: PointStamped):
         # get the area
-        tag_detections: List[AprilTagDetectionArray] = []      # TODO: Get from message filter
+        tag_detections: AprilTagDetectionArray = []      # TODO: Get from message filter
         working_area_in_image: List[Point] = []
-        for tag in tag_detections:
-            working_area_in_image.append(tag.center)
 
         # Check which tags are visible -> mofidy marker_pose_list
-        object_points = self.marker_pose_list
+        marker_points, working_area_in_image = parse_tags(self.marker_pose_list, tag_detections)
 
         # Check if gaze is inside area
         if is_inside_polygon(working_area_in_image, gaze_point):
+            # Get camera coeffs
+            cameraMatrix = np.zeros(())
+
             # solvePnP
-            rotation_vector, translation_vector = cv2.solvePnP(object_points,
-                                                               working_area_in_image,
-                                                               cameraMatrix=0,
-                                                               distCoeffs=0)
+            object_points = convert_ros_points_to_cv2(marker_points)
+            image_points = convert_ros_points_to_cv2(working_area_in_image)
+            success, rotation_vector, translation_vector = cv2.solvePnP(object_points,
+                                                                        image_points,
+                                                                        cameraMatrix=[],
+                                                                        distCoeffs=np.zeros((4,1)),
+                                                                        flags=0,)
             # Get gaze point in world
             point = Point(x=1.5, y=1.5)
 
             # Move arm
-
 
     def camera_callback(self, data: Image):
         pass
@@ -91,6 +94,29 @@ class GazeController(Node):
         self.camera_info = camera_info
         self.camera_info_sub.destroy()      # TODO: Validate data before destroying.Also there is another way to destroy
         # TODO: Do not destroy if transient local -> it's fine to have the sub on all the time
+
+
+def convert_ros_points_to_cv2(points: [PointProtocol]) -> List[List[float]]:
+    cv_points = []
+    for point in points:
+        tmp = []
+        tmp.append(point.x)
+        tmp.append(point.y)
+        # try:
+        #     tmp.append(point.z)
+        # except
+
+def parse_tags(pose_list: List[PointProtocol], detections: AprilTagDetectionArray) \
+        -> Tuple[List[PointProtocol], List[PointProtocol]]:
+
+    object_points = []
+    image_points = []
+
+    for detection in detections:
+        image_points.append(detection.center)
+        object_points.append(pose_list[detection.id])
+
+    return object_points, image_points
 
 
 if __name__ == "__main__":
