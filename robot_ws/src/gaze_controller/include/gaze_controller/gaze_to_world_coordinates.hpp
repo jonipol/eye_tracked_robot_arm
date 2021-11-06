@@ -1,6 +1,3 @@
-//
-// Created by jp on 20.10.2021.
-//
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/camera_info.hpp"
 #include "geometry_msgs/msg/point_stamped.hpp"
@@ -33,11 +30,19 @@ private:
     void gaze_callback(geometry_msgs::msg::PointStamped::SharedPtr gaze_point);
     void camera_info_callback(sensor_msgs::msg::CameraInfo::SharedPtr camera_info);
     void tag_callback(apriltag_msgs::msg::AprilTagDetectionArray::SharedPtr tag_array);
+    void move_arm();
 
     geometry_msgs::msg::PointStamped latest_gaze_;
     cv::Mat cameraMatrix_;
     cv::Mat distCoeffs_;
     std::vector<cv::Point3f> modelPts_;
+
+    static const std::string PLANNING_GROUP_ = "ur_arm";
+    moveit::planning_interface::MoveGroupInterface move_group_;
+
+    // class to add and remove collision objects in our "virtual world" scene
+    moveit::planning_interface::PlanningSceneInterface planning_scene_interface_;
+
 
     // TODO: Make smaller! Big just for testing and initial implementation
     float time_tolerance_ = 1.0;     // Time allowed to be passed since latest gaze measurement

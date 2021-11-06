@@ -1,9 +1,22 @@
 #include "gaze_controller/gaze_to_world_coordinates.hpp"
 
+//#include <moveit/move_group_interface/move_group_interface.h>
+//#include <moveit/planning_scene_interface/planning_scene_interface.h>
+//
+//#include <moveit_msgs/msg/display_robot_state.hpp>
+//#include <moveit_msgs/msg/display_trajectory.hpp>
+//
+//#include <moveit_msgs/msg/attached_collision_object.hpp>
+//#include <moveit_msgs/msg/collision_object.hpp>
+//
+//#include <moveit_visual_tools/moveit_visual_tools.h>
+//static const rclcpp::Logger LOGGER = rclcpp::get_logger("move_group_demo");
+
 #include <iostream>
 #include <opencv2/opencv.hpp>
 using std::placeholders::_1;
 
+// https://github.com/ros-planning/moveit2_tutorials/blob/foxy/doc/move_group_interface/src/move_group_interface_tutorial.cpp
 
 //@ref: http://answers.opencv.org/question/67008/can-i-get-2d-world-coordinates-from-a-single-image-uv-coords/
 
@@ -106,7 +119,7 @@ cv::Point3f compute3DOnPlaneFrom2D(const cv::Point2f &imagePt, const cv::Mat &ca
     return pt;
 }
 
-void extract_camera_intrinsics(sensor_msgs::msg::CameraInfo camera_info, cv::Mat &camera_matrix, cv::Mat &dist_coeffs) {
+void gaze_to_world_coordinates::extract_camera_intrinsics(sensor_msgs::msg::CameraInfo camera_info, cv::Mat &camera_matrix, cv::Mat &dist_coeffs) {
     camera_matrix = cv::Mat_<float>(3, 3);
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; i++) {
@@ -209,11 +222,33 @@ gaze_to_world_coordinates::gaze_to_world_coordinates(const char * node_name) : N
     // TODO: Get points as parameters.
     // TODO: Make points reconfigurable
     // TODO: Make amount dynamic
-    //          TODO: Make sure there is at least 3 points
+    // TODO: Make sure there is at least 3 points
     modelPts_.push_back(cv::Point3f(5.0, 5.0, 0.0));
     modelPts_.push_back(cv::Point3f(5.0, -5.0, 0.0));
     modelPts_.push_back(cv::Point3f(-5.0, -5.0, 0.0));
     modelPts_.push_back(cv::Point3f(-5.0, 5.0, 0.0));
+
+  // Arm control setup
+  move_group(this, PLANNING_GROUP_);
+
+
+  // Raw pointers are frequently used to refer to the planning group for improved performance.
+  const moveit::core::JointModelGroup* joint_model_group =
+      move_group_.getCurrentState()->getJointModelGroup(PLANNING_GROUP_);
+
+  // Getting Basic Information
+  // ^^^^^^^^^^^^^^^^^^^^^^^^^
+  //
+  // We can print the name of the reference frame for this robot.
+  RCLCPP_INFO(LOGGER, "Planning frame: %s", move_group_.getPlanningFrame().c_str());
+
+  // We can also print the name of the end-effector link for this group.
+  RCLCPP_INFO(LOGGER, "End effector link: %s", move_group_.getEndEffectorLink().c_str());
+
+  // We can get a list of all the groups in the robot:
+  RCLCPP_INFO(LOGGER, "Available Planning Groups:");
+  std::copy(move_group_.getJointModelGroupNames().begin(), move_group_.getJointModelGroupNames().end(),
+            std::ostream_iterator<std::string>(std::cout, ", "));
 }
 
 void gaze_to_world_coordinates::gaze_callback(geometry_msgs::msg::PointStamped::SharedPtr gaze_point) {
@@ -221,7 +256,7 @@ void gaze_to_world_coordinates::gaze_callback(geometry_msgs::msg::PointStamped::
 }
 
 void gaze_to_world_coordinates::camera_info_callback(sensor_msgs::msg::CameraInfo::SharedPtr camera_info) {
-    extract_camera_intrinsics(*camera_info, cameraMatrix_, distCoeffs_);
+    gaze_to_world_coordinates::extract_camera_intrinsics(*camera_info, cameraMatrix_, distCoeffs_);
 }
 
 void gaze_to_world_coordinates::tag_callback(apriltag_msgs::msg::AprilTagDetectionArray::SharedPtr tag_array) {
@@ -237,7 +272,7 @@ void gaze_to_world_coordinates::tag_callback(apriltag_msgs::msg::AprilTagDetecti
     // Calculate world point
     try {
         auto point = calculate_world_point_from_gaze(*tag_array);
-
+        // TODO: Add stamp and pub as PointStamped
         // Publish world point
         world_point_pub_->publish(point);
     }
@@ -245,7 +280,21 @@ void gaze_to_world_coordinates::tag_callback(apriltag_msgs::msg::AprilTagDetecti
 //    catch (const std::exception& e) {
         RCLCPP_DEBUG(this->get_logger(), "Not enough detected tags");
     }
+}
 
+void gaze_to_world_coordinates::move_arm() {
+
+  geometry_msgs::msg::Pose target_pose1;
+  target_pose1.orientation.w = 1.0;
+  target_pose1.position.x = 0.28;
+  target_pose1.position.y = -0.2;
+  target_pose1.position.z = 0.5;
+  move_group_.setPoseTarget(target_pose1);
+
+  moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+  bool success = (move_group_.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+
+  move_group.move();
 }
 
 int main(int argc, char **argv) {

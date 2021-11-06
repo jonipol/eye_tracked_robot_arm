@@ -17,6 +17,7 @@ find_package(rclpy REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(apriltag_msgs REQUIRED)
+#find_package(moveit2 REQUIRED)
 
 find_package(OpenCV REQUIRED)
 
@@ -36,11 +37,21 @@ set(gaze_deps
   OpenCV
 )
 
+set(arm_deps
+  rclcpp
+  geometry_msgs
+
+)
+
 add_executable(gaze_to_world_coordinates src/gaze_to_world_coordinates.cpp)
 ament_target_dependencies(gaze_to_world_coordinates ${gaze_deps})
 
+add_executable(arm_controller src/arm_controller.cpp)
+ament_target_dependencies(arm_controller ${arm_deps})
+
 install(TARGETS
   gaze_to_world_coordinates
+  arm_controller
   DESTINATION lib/${PROJECT_NAME}
 )
 
